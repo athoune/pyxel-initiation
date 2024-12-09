@@ -3,8 +3,8 @@ import pyxel
 
 class App:
     def __init__(self):
-        pyxel.init(640, 480, title="UFO exploration")  # width, height, title
-        pyxel.load("initiation.pyxres")
+        pyxel.init(160, 120, title="UFO exploration")  # width, height, title
+        pyxel.load("spaceship.pyxres")
         self.player_x = 72  # 🛸 X position
         self.player_y = 72  # 🛸 Y position
         self.spaceship_r = (0, 0, 16, 16, 0)  # x, y, width, height, transparent color

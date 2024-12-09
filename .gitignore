@@ -1,0 +1,5 @@
+.pyxel-env/
+.ropeproject/
+*.pyxapp
+pyxel_examples/
+
