@@ -1,10 +1,9 @@
-import math
 import pyxel
 
 
 class App:
     def __init__(self):
-        pyxel.init(160, 120, title="UFO exploration")  # width, height, title
+        pyxel.init(640, 480, title="UFO exploration")  # width, height, title
         pyxel.load("initiation.pyxres")
         self.player_x = 72  # 🛸 X position
         self.player_y = 72  # 🛸 Y position
@@ -24,8 +23,8 @@ class App:
         if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT):
             self.player_x = min(self.player_x + 2, pyxel.width - 16)  # go ->
             self.ship = self.spaceship_r  # 🛸 looks ->
-        # 🛸 bumps slowly
-        self.player_y = math.cos(pyxel.frame_count * 2 * math.pi / 16) + 72
+        # 🛸 bumps slowly 1/16 per tick starting with y = 72
+        self.player_y = pyxel.cos(pyxel.frame_count * 360 / 16) + 72
 
     def draw(self):
         pyxel.cls(0)  # clear screen with color 0
