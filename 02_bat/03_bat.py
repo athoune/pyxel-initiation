@@ -5,56 +5,69 @@ class Bat:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.images = [
+        self.images = [ # The bat uses two images : wings up, wings down
             (0, 0, 16, 16, 0),  # x, y, width, height, transparent color
             (16, 0, 16, 16, 0),
         ]
-        self.width = self.images[0][2]
-        self.height = self.images[0][3]
-        self.step = 0
-        self.angle = 0
-        self.target_x: int
+        # self.x is the top left corner of the image,
+        # computing the position of the center of the bat is more intuitive
+        self.center_x = self.images[0][2] / 2
+        self.center_y = self.images[0][3] / 2
+        self.frame = 0 # 0 : bat wings are up, 1 : down
+        self.angle = 0 # Where does the bat look ?
+        self.target_x: int # The bat goes to this target
         self.target_y: int
-        self.moving = False
+        self.speed = 0
 
-    def draw(self):
-        pyxel.blt(self.x, self.y, 0, *(self.images[self.step]))
-
-    def flip(self):
-        if self.step == 0:
-            self.step = 1
-        else:
-            self.step = 0
-
-    def one_step(self, step: float):
-        if self.moving:
-            delta = distance(self.target_x,
-                             self.target_y,
-                             self.x,
-                             self.y)
-            if delta <= step:
-                self.moving = False
-            else:
-                self.x += pyxel.sin(self.angle) * step
-                self.y += pyxel.cos(self.angle) * step
-
-    def move_to(self, x, y):
+    def move_to(self, x, y, speed):
+        "The bat rotate and will move to the target"
         self.target_x = x
         self.target_y = y
+        self.speed = speed
         self.rotate_to(x, y)
         self.moving = True
 
     def rotate_to(self, x, y):
-        self.angle = angle(x, y, self.x, self.y)
+        self.angle = angle(x, y,
+            self.x + self.center_x,
+            self.y + self.center_y)
+
+    def one_step(self,):
+        "The bat moves to its target"
+        if self.speed != 0:
+            delta = distance(self.target_x,
+                             self.target_y,
+                             self.x + self.center_x,
+                             self.y + self.center_y)
+            if delta <= self.speed:
+                self.speed = 0
+            else:
+                self.x += pyxel.sin(self.angle) * self.speed
+                self.y += pyxel.cos(self.angle) * self.speed
+
+    def flip(self):
+        "The wings switch from up to dwon"
+        if self.frame == 0:
+            self.frame = 1
+        else:
+            self.frame = 0
+
+    def draw(self):
+        "Draw the sprite"
+        if pyxel.frame_count % 10 == 0: # Every 10 frames, to wings flip
+            self.flip()
+        pyxel.blt(self.x, self.y, 0, *(self.images[self.frame]))
 
 
-def distance(x1, y1, x2, y2: int) -> float:
+def distance(x1, y1, x2, y2: float) -> float:
+    "Euclidian distance"
     dx = x1 - x2
     dy = y1 - y2
     return pyxel.sqrt(dx**2 + dy**2)
 
 
 def angle(x1, y1, x2, y2: int) -> float:
+    "Get the angle between two points with trigonometry"
     dx = x1 - x2
     dy = y1 - y2
     return pyxel.atan2(dx, dy)
@@ -63,31 +76,26 @@ def angle(x1, y1, x2, y2: int) -> float:
 class App:
     def __init__(self):
         pyxel.init(160, 120, title="Flying bat")  # width, height, title
-        pyxel.load("bat.pyxres")
+        pyxel.load("bat.pyxres") # Load the assets
 
-        self.bat = Bat(72, 72)
-        self.angle = -1.0
+        self.bat = Bat(72, 72) # Spawn a new bat 🦇
 
-        pyxel.mouse(True)
-        pyxel.run(self.update, self.draw)
+        pyxel.mouse(True) # Show the mouse
+
+        pyxel.run(self.update, self.draw) # Starts Pyxel loop
 
     def update(self):
-        if pyxel.btnp(pyxel.KEY_Q):
+        if pyxel.btnp(pyxel.KEY_Q): # Hit Q to quit
             pyxel.quit()
 
-        if pyxel.frame_count % 10 == 0:
-            self.bat.flip()
+        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT): # Mouse click set the target
+            self.bat.move_to(pyxel.mouse_x, pyxel.mouse_y, 2) # x, y, speed
 
-        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
-            self.bat.move_to(pyxel.mouse_x, pyxel.mouse_y)
-
-        SPEED = 2
-        self.bat.one_step(SPEED)
+        self.bat.one_step() # The bat fly, one step at time
 
     def draw(self):
-        pyxel.cls(0)
-
-        self.bat.draw()
+        pyxel.cls(0) # Clear screen
+        self.bat.draw() # Draw the bat at its current position
 
 
 App()
