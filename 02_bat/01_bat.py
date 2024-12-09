@@ -31,6 +31,9 @@ class App:
         pyxel.run(self.update, self.draw)
 
     def update(self):
+        if pyxel.btnp(pyxel.KEY_Q):
+            pyxel.quit()
+
         if pyxel.frame_count % 10 == 0:
             self.bat.flip()
 
