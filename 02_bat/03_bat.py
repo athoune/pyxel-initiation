@@ -61,9 +61,6 @@ def angle(x1, y1, x2, y2: int) -> float:
 
 
 class App:
-    target_x: int
-    target_y: int
-
     def __init__(self):
         pyxel.init(160, 120, title="Flying bat")  # width, height, title
         pyxel.load("bat.pyxres")
