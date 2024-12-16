@@ -13,7 +13,7 @@ class Sprite:
         self.x = x
         self.y = y
         self.speed: int
-        self.angle: int   # bottom, left, right, top
+        self.angle: int  # bottom, left, right, top
         self._images = []
 
     def move(self):
@@ -34,10 +34,10 @@ class Beholder(Sprite):
         self.angle = 1
         self.speed = 2
         self.state = WAITING
-        self._main_images = [(i * 16, 0, 16, 16, TRANSPARENT)
-                             for i in range(4)]
-        self._loading_images = [(i * 16, 16, 16, 16, TRANSPARENT)
-                                for i in range(4)]
+        self._main_images = [(i * 16, 0, 16, 16, TRANSPARENT) for i in range(4)]
+        self._loading_images = [(i * 16, 16, 16, 16, TRANSPARENT) for i in range(4)]
+        self._aim_dx: int
+        self._aim_dy: int
 
     def image(self):
         if self.state == LOADING:
@@ -51,8 +51,7 @@ class Hero(Sprite):
         super().__init__(x, y)
         self.speed = 4
         self.angle = 2
-        self._images = [(i * 16, 32, 16, 16, TRANSPARENT)
-                       for i in range(4)]
+        self._images = [(i * 16, 32, 16, 16, TRANSPARENT) for i in range(4)]
 
     def image(self):
         return self._images[self.angle]
