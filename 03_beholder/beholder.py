@@ -70,6 +70,25 @@ class App:
         if pyxel.btnp(pyxel.KEY_Q):  # Hit Q to quit
             pyxel.quit()
 
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.hero.angle = 0
+            self.hero.move()
+
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.hero.angle = 1
+            self.hero.move()
+
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.hero.angle = 2
+            self.hero.move()
+
+        if pyxel.btn(pyxel.KEY_UP):
+            self.hero.angle = 3
+            self.hero.move()
+
+        if pyxel.frame_count % 40 == 0:
+            self.beholder.aim(self.hero)
+
     def draw(self):
         pyxel.cls(0)  # Clear screen
         self.hero.draw()
