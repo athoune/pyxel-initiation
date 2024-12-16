@@ -22,7 +22,7 @@ class Sprite:
         self.y += d[1] * self.speed
 
     def image(self) -> tuple:
-        raise NotImplemntedError
+        raise NotImplementedError
 
     def draw(self):
         pyxel.blt(self.x, self.y, 0, *(self.image()))
