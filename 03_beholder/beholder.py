@@ -45,6 +45,37 @@ class Beholder(Sprite):
         else:
             return self._main_images[self.angle]
 
+    def aim(self, target: Sprite):
+        self.state = LOADING
+        self._aim_dx = self.x - target.x
+        self._aim_dy = self.y - target.y
+
+    def shoot(self, target: Sprite):
+        self.state = FIRING
+        if self._aim_dx == 0:
+            x = 0
+            if self._aim_dy == 0:
+                return
+        else:
+            if self._aim_dx > 0:
+                x = 120
+            else:
+                x = 0
+
+        if self._aim_dx != 0:
+            slope = self._aim_dy / self._aim_dx
+            if slope < 0:
+                slope = -slope
+            print("slope:", slope)
+
+            y = slope * x
+            if self._aim_dy > 0:
+                y = -y
+        else:
+            y = 0  # ??
+
+        pyxel.line(self.x + 8, self.y + 8, self.x - x, self.y + y + 8, 6)
+
 
 class Hero(Sprite):
     def __init__(self, x, y):
@@ -92,5 +123,8 @@ class App:
         pyxel.cls(13)  # Clear screen
         self.hero.draw()
         self.beholder.draw()
+        if pyxel.frame_count % 40 == 20:
+            self.beholder.shoot(self.hero)
+
 
 App()
