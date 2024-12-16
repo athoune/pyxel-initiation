@@ -17,7 +17,7 @@ class Sprite:
         self._images = []
 
     def move(self):
-        d = [(0, 1), (1, 0),(-1,0), (0, 1)][self.angle]
+        d = [(0, 1), (-1, 0), (1, 0), (0, -1)][self.angle]
         self.x += d[0] * self.speed
         self.y += d[1] * self.speed
 
