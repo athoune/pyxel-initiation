@@ -2,4 +2,5 @@
 .ropeproject/
 *.pyxapp
 pyxel_examples/
+.ruff_cache
 
