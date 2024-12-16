@@ -89,7 +89,7 @@ class App:
             self.beholder.aim(self.hero)
 
     def draw(self):
-        pyxel.cls(0)  # Clear screen
+        pyxel.cls(13)  # Clear screen
         self.hero.draw()
         self.beholder.draw()
 
