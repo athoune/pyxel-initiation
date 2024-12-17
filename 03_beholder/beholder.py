@@ -2,10 +2,15 @@ import pyxel
 
 TRANSPARENT = 11
 
+# Beholder
 LOADING = 0
 FIRING = 1
 MOVING = 2
 WAITING = 3
+
+# Hero
+HEALTHY = 0
+ZAPPED = 1
 
 
 class Sprite:
@@ -15,13 +20,14 @@ class Sprite:
         self.speed: int
         self.angle: int  # bottom, left, right, top
         self._images = []
+        self.state: int
 
     def move(self):
         d = [(0, 1), (-1, 0), (1, 0), (0, -1)][self.angle]
         self.x += d[0] * self.speed
         self.y += d[1] * self.speed
 
-    def image(self) -> tuple:
+    def image(self) -> tuple[int, int, int, int, int]:
         raise NotImplementedError
 
     def draw(self):
@@ -61,19 +67,23 @@ class Beholder(Sprite):
                 x = 120
             else:
                 x = 0
-
-        if self._aim_dx != 0:
             slope = self._aim_dy / self._aim_dx
             if slope < 0:
                 slope = -slope
             print("slope:", slope)
-
             y = slope * x
             if self._aim_dy > 0:
                 y = -y
-        else:
-            y = 0  # ??
-
+            yt = self.y + (self.x - target.x + 8) * slope
+            print("Y:", yt, target.y)
+            if yt <= target.y + 8 and yt >= target.y - 8:
+                print("side pool!")
+                target.state = ZAPPED
+            xt = self.x + (self.y - target.y + 8) / slope
+            if xt <= target.x + 8 and xt >= target.x - 8:
+                print("top pool!")
+                target.state = ZAPPED
+        # FIXME where is my y ?
         pyxel.line(self.x + 8, self.y + 8, self.x - x, self.y + y + 8, 6)
 
 
@@ -83,9 +93,17 @@ class Hero(Sprite):
         self.speed = 4
         self.angle = 2
         self._images = [(i * 16, 32, 16, 16, TRANSPARENT) for i in range(4)]
+        self._zapped_images = [
+            (64, 32, 16, 16, TRANSPARENT),
+            (64, 32, -16, 16, TRANSPARENT),
+        ]
+        self.state = HEALTHY
 
     def image(self):
-        return self._images[self.angle]
+        if self.state == HEALTHY:
+            return self._images[self.angle]
+        elif self.state == ZAPPED:
+            return self._zapped_images[pyxel.frame_count % 2]
 
 
 class App:
