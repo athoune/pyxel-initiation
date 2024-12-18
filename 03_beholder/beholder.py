@@ -2,13 +2,13 @@ import pyxel
 
 TRANSPARENT = 11
 
-# Beholder
+# Beholder states
 LOADING = 0
 FIRING = 1
 MOVING = 2
 WAITING = 3
 
-# Hero
+# Hero states
 HEALTHY = 0
 ZAPPED = 1
 
