@@ -23,9 +23,12 @@ class Sprite:
         self.state: int
 
     def move(self):
-        d = [(0, 1), (-1, 0), (1, 0), (0, -1)][self.angle]
-        self.x += d[0] * self.speed
-        self.y += d[1] * self.speed
+        # 0: don't move
+        # 1: move forward
+        # -1: move forward
+        # angle : ↓←→↑
+        self.x += [0, -1, 1, 0][self.angle] * self.speed
+        self.y += [1, 0, 0, -1][self.angle] * self.speed
 
     def image(self) -> tuple[int, int, int, int, int]:
         raise NotImplementedError
