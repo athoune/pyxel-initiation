@@ -73,8 +73,7 @@ class Beholder(Sprite):
 
     def aim(self, target: Sprite):
         self.state = LOADING
-        self._aim_dx = self.x - target.x  # > 0 : T S
-        self._aim_dy = self.y - target.y  # > 0 : T S
+        self._aim_dx, self._aim_dy = self.x - target.x, self.y - target.y
 
     def shoot(self, target: Sprite):
         self.state = FIRING
@@ -83,11 +82,9 @@ class Beholder(Sprite):
         y_end: float  # vertical end of the ray
 
         # Center of the shooter
-        shooter_x = self.x + 8
-        shooter_y = self.y + 8
+        shooter_x, shooter_y = self.x + 8, self.y + 8
         # Center of the target
-        target_x = target.x + 8
-        target_y = target.y + 8
+        target_x, target_y = target.x + 8, target.y + 8
         # Side hit by the shot
         target_side_x = target_x + pyxel.sgn(self._aim_dx) * 8
         target_side_y = target_y + pyxel.sgn(self._aim_dy) * 8
@@ -104,8 +101,7 @@ class Beholder(Sprite):
         if x_end is None:  # It shots its own foot
             return
 
-        y_hit = shooter_y
-        x_hit = shooter_x
+        x_hit, y_hit = shooter_x, shooter_y
         if self._aim_dx != 0:
             slope = self._aim_dy / self._aim_dx
             y_end = (x_end - shooter_x) * slope + shooter_y
@@ -114,17 +110,13 @@ class Beholder(Sprite):
                 x_end = (y_end - shooter_y) / slope + shooter_x
                 x_hit = (target_side_y - shooter_y) / slope + shooter_x
         if abs(target_x - x_hit) <= 8:
-            x_end = x_hit
-            y_end = target_side_y
+            x_end, y_end = x_hit, target_side_y
             target.state = ZAPPED
         if abs(target_y - y_hit) <= 8:
-            x_end = target_side_x
-            y_end = y_hit
+            x_end, y_end = target_side_x, y_hit
             target.state = ZAPPED
-        # shooter, target, color
-        pyxel.line(
-            shooter_x, shooter_y, x_end, y_end, 3 if target.state == ZAPPED else 6
-        )
+        bolt_color = 10 if target.state == ZAPPED else 6
+        pyxel.line(shooter_x, shooter_y, x_end, y_end, bolt_color)
 
 
 class Hero(Sprite):
@@ -168,16 +160,12 @@ class App:
         else:
             if pyxel.btn(pyxel.KEY_DOWN):
                 self.hero.move(0)
-
             if pyxel.btn(pyxel.KEY_LEFT):
                 self.hero.move(1)
-
             if pyxel.btn(pyxel.KEY_RIGHT):
                 self.hero.move(2)
-
             if pyxel.btn(pyxel.KEY_UP):
                 self.hero.move(3)
-
             if pyxel.frame_count % 40 == 10:  # Every 50 frames, the beholder aim
                 self.beholder.aim(self.hero)
             if pyxel.frame_count % 40 == 30:  # 25 later, it shoots
