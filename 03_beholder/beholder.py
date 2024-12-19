@@ -19,18 +19,19 @@ class Sprite:
         self.y = y
         self.speed: int
         self.angle: int  # bottom, left, right, top
-        self._images = []
         self.state: int
 
-    def move(self):
+    def move(self, angle: int):
         # 0: don't move
         # 1: move forward
         # -1: move forward
         # angle : ↓←→↑
-        self.x += [0, -1, 1, 0][self.angle] * self.speed
-        self.y += [1, 0, 0, -1][self.angle] * self.speed
+        self.angle = angle
+        self.x += [0, -1, 1, 0][angle] * self.speed
+        self.y += [1, 0, 0, -1][angle] * self.speed
 
     def image(self) -> tuple[int, int, int, int, int]:
+        # What is the current image
         raise NotImplementedError
 
     def draw(self):
@@ -43,8 +44,11 @@ class Beholder(Sprite):
         self.angle = 1
         self.speed = 2
         self.state = WAITING
+        # The beholder can be normal : waiting, aiming, moving…
         self._main_images = [(i * 16, 0, 16, 16, TRANSPARENT) for i in range(4)]
+        # The beholder loads its death ray
         self._loading_images = [(i * 16, 16, 16, 16, TRANSPARENT) for i in range(4)]
+        # Where the beholder aims
         self._aim_dx: int
         self._aim_dy: int
 
@@ -61,32 +65,39 @@ class Beholder(Sprite):
 
     def shoot(self, target: Sprite):
         self.state = FIRING
-        if self._aim_dx == 0:
+        # Default values
+        if self._aim_dy < 0:
+            y = 0
+        else:  # _aim_dy > 0
+            y = pyxel.height
+        if self._aim_dx < 0:
             x = 0
-            if self._aim_dy == 0:
+        else:  # _aim_dx > 0
+            x = pyxel.width
+        # Vertical shot exception
+        if (
+            self._aim_dx == 0
+        ):  # the ray is 90° or 270°, /!\ division by 0 in slopee calcul
+            if self._aim_dy == 0:  # Shoot on its foot
                 return
+            x = self.x
+            xt = target.x
+            yt = target.y
         else:
-            if self._aim_dx > 0:
-                x = 120
-            else:
-                x = 0
             slope = self._aim_dy / self._aim_dx
-            if slope < 0:
+            if slope < 0:  # the slope has no sense, just a direction
                 slope = -slope
             print("slope:", slope)
             y = slope * x
-            if self._aim_dy > 0:
+            if self._aim_dy > 0:  # the target is behind
                 y = -y
             yt = self.y + (self.x - target.x + 8) * slope
-            print("Y:", yt, target.y)
-            if yt <= target.y + 8 and yt >= target.y - 8:
-                print("side pool!")
-                target.state = ZAPPED
             xt = self.x + (self.y - target.y + 8) / slope
-            if xt <= target.x + 8 and xt >= target.x - 8:
-                print("top pool!")
-                target.state = ZAPPED
-        # FIXME where is my y ?
+        # Hit or miss
+        if yt <= target.y + 8 and yt >= target.y - 8:
+            target.state = ZAPPED  # side hit
+        if xt <= target.x + 8 and xt >= target.x - 8:
+            target.state = ZAPPED  # up (or bottom) hit
         pyxel.line(self.x + 8, self.y + 8, self.x - x, self.y + y + 8, 6)
 
 
@@ -115,30 +126,34 @@ class App:
         pyxel.load("beholder.pyxres")  # Load the assets
         self.hero = Hero(32, 104)
         self.beholder = Beholder(128, 32)
+        self.game_over = 0
         pyxel.run(self.update, self.draw)  # Starts Pyxel loop
 
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):  # Hit Q to quit
             pyxel.quit()
 
-        if pyxel.btn(pyxel.KEY_DOWN):
-            self.hero.angle = 0
-            self.hero.move()
+        if self.hero.state == ZAPPED:  # Everything is frozen when the hero is zapped
+            if self.game_over == 0:
+                self.game_over = pyxel.frame_count
+            else:
+                if pyxel.frame_count - self.game_over == 30:
+                    pyxel.quit()
+        else:
+            if pyxel.btn(pyxel.KEY_DOWN):
+                self.hero.move(0)
 
-        if pyxel.btn(pyxel.KEY_LEFT):
-            self.hero.angle = 1
-            self.hero.move()
+            if pyxel.btn(pyxel.KEY_LEFT):
+                self.hero.move(1)
 
-        if pyxel.btn(pyxel.KEY_RIGHT):
-            self.hero.angle = 2
-            self.hero.move()
+            if pyxel.btn(pyxel.KEY_RIGHT):
+                self.hero.move(2)
 
-        if pyxel.btn(pyxel.KEY_UP):
-            self.hero.angle = 3
-            self.hero.move()
+            if pyxel.btn(pyxel.KEY_UP):
+                self.hero.move(3)
 
-        if pyxel.frame_count % 40 == 0:
-            self.beholder.aim(self.hero)
+            if pyxel.frame_count % 40 == 0:  # Every 40 frames, the beholder aim
+                self.beholder.aim(self.hero)
 
     def draw(self):
         pyxel.cls(13)  # Clear screen
@@ -146,6 +161,8 @@ class App:
         self.beholder.draw()
         if pyxel.frame_count % 40 == 20:
             self.beholder.shoot(self.hero)
+        if self.hero.state == ZAPPED:
+            pyxel.text(60, 10, "GAME OVER", 7, None)
 
 
 App()
