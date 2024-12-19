@@ -29,6 +29,15 @@ class Sprite:
         self.angle = angle
         self.x += [0, -1, 1, 0][angle] * self.speed
         self.y += [1, 0, 0, -1][angle] * self.speed
+        # Can't escape the screen
+        if self.x < 0:
+            self.x = 0
+        elif self.x > pyxel.width - 16:
+            self.x = pyxel.width - 16
+        if self.y < 0:
+            self.y = 0
+        elif self.y > pyxel.height - 16:
+            self.y = pyxel.height - 16
 
     def image(self) -> tuple[int, int, int, int, int]:
         # What is the current image
