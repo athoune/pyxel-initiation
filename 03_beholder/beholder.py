@@ -13,6 +13,10 @@ HEALTHY = 0
 ZAPPED = 1
 
 
+def abs(x: float) -> float:
+    return x * pyxel.sgn(x)
+
+
 class Sprite:
     def __init__(self, x, y):
         self.x = x
@@ -69,45 +73,58 @@ class Beholder(Sprite):
 
     def aim(self, target: Sprite):
         self.state = LOADING
-        self._aim_dx = self.x - target.x
-        self._aim_dy = self.y - target.y
+        self._aim_dx = self.x - target.x  # > 0 : T S
+        self._aim_dy = self.y - target.y  # > 0 : T S
 
     def shoot(self, target: Sprite):
         self.state = FIRING
-        # Default values
-        if self._aim_dy < 0:
-            y = 0
-        else:  # _aim_dy > 0
-            y = pyxel.height
-        if self._aim_dx < 0:
-            x = 0
-        else:  # _aim_dx > 0
-            x = pyxel.width
-        # Vertical shot exception
-        if (
-            self._aim_dx == 0
-        ):  # the ray is 90° or 270°, /!\ division by 0 in slopee calcul
-            if self._aim_dy == 0:  # Shoot on its foot
-                return
-            x = self.x
-            xt = target.x
-            yt = target.y
-        else:
+        # The ray starts avec self.x, self.y
+        x_end: float  # horizontal end of the ray
+        y_end: float  # vertical end of the ray
+
+        # Center of the shooter
+        shooter_x = self.x + 8
+        shooter_y = self.y + 8
+        # Center of the target
+        target_x = target.x + 8
+        target_y = target.y + 8
+        # Side hit by the shot
+        target_side_x = target_x + pyxel.sgn(self._aim_dx) * 8
+        target_side_y = target_y + pyxel.sgn(self._aim_dy) * 8
+
+        # Where the ray ends when it miss ?
+
+        cross = [  # x, y
+            [(pyxel.width, pyxel.height), (pyxel.width, shooter_y), (pyxel.width, 0)],
+            [(shooter_x, pyxel.height), (None, None), (shooter_x, 0)],
+            [(0, pyxel.height), (0, shooter_y), (0, 0)],
+        ]
+        x_end, y_end = cross[pyxel.sgn(self._aim_dx) + 1][pyxel.sgn(self._aim_dy) + 1]
+
+        if x_end is None:  # It shots its own foot
+            return
+
+        y_hit = shooter_y
+        x_hit = shooter_x
+        if self._aim_dx != 0:
             slope = self._aim_dy / self._aim_dx
-            if slope < 0:  # the slope has no sense, just a direction
-                slope = -slope
-            print("slope:", slope)
-            y = slope * x
-            if self._aim_dy > 0:  # the target is behind
-                y = -y
-            yt = self.y + (self.x - target.x + 8) * slope
-            xt = self.x + (self.y - target.y + 8) / slope
-        # Hit or miss
-        if yt <= target.y + 8 and yt >= target.y - 8:
-            target.state = ZAPPED  # side hit
-        if xt <= target.x + 8 and xt >= target.x - 8:
-            target.state = ZAPPED  # up (or bottom) hit
-        pyxel.line(self.x + 8, self.y + 8, self.x - x, self.y + y + 8, 6)
+            y_end = (x_end - shooter_x) * slope + shooter_y
+            y_hit = (target_side_x - shooter_x) * slope + shooter_y
+            if slope != 0:
+                x_end = (y_end - shooter_y) / slope + shooter_x
+                x_hit = (target_side_y - shooter_y) / slope + shooter_x
+        if abs(target_x - x_hit) <= 8:
+            x_end = x_hit
+            y_end = target_side_y
+            target.state = ZAPPED
+        if abs(target_y - y_hit) <= 8:
+            x_end = target_side_x
+            y_end = y_hit
+            target.state = ZAPPED
+        # shooter, target, color
+        pyxel.line(
+            shooter_x, shooter_y, x_end, y_end, 3 if target.state == ZAPPED else 6
+        )
 
 
 class Hero(Sprite):
@@ -131,7 +148,7 @@ class Hero(Sprite):
 
 class App:
     def __init__(self):
-        pyxel.init(160, 120, title="Flying bat")  # width, height, title
+        pyxel.init(160, 120, title="Flying bat", fps=30)  # width, height, title
         pyxel.load("beholder.pyxres")  # Load the assets
         self.hero = Hero(32, 104)
         self.beholder = Beholder(128, 32)
@@ -161,14 +178,16 @@ class App:
             if pyxel.btn(pyxel.KEY_UP):
                 self.hero.move(3)
 
-            if pyxel.frame_count % 40 == 0:  # Every 40 frames, the beholder aim
+            if pyxel.frame_count % 40 == 10:  # Every 50 frames, the beholder aim
                 self.beholder.aim(self.hero)
+            if pyxel.frame_count % 40 == 30:  # 25 later, it shoots
+                self.beholder.state = FIRING
 
     def draw(self):
         pyxel.cls(13)  # Clear screen
         self.hero.draw()
         self.beholder.draw()
-        if pyxel.frame_count % 40 == 20:
+        if self.beholder.state == FIRING:
             self.beholder.shoot(self.hero)
         if self.hero.state == ZAPPED:
             pyxel.text(60, 10, "GAME OVER", 7, None)
