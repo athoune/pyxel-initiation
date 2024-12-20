@@ -71,6 +71,13 @@ class Beholder(Sprite):
         else:
             return self._main_images[self.angle]
 
+    def watch(self, target: Sprite):
+        dx, dy = self.x - target.x, self.y - target.y
+        if abs(dx) > abs(dy):
+            self.angle = 1 if dx > 0 else 2
+        else:
+            self.angle = 3 if dy > 0 else 0
+
     def aim(self, target: Sprite):
         self.state = LOADING
         self._aim_dx, self._aim_dy = self.x - target.x, self.y - target.y
@@ -168,6 +175,8 @@ class App:
                 self.hero.move(2)
             if pyxel.btn(pyxel.KEY_UP):
                 self.hero.move(3)
+
+            self.beholder.watch(self.hero)
             if pyxel.frame_count % 40 == 10:  # Every 50 frames, the beholder aim
                 self.beholder.aim(self.hero)
             if pyxel.frame_count % 40 == 30:  # 25 later, it shoots
