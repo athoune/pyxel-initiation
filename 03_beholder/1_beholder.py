@@ -3,10 +3,6 @@ import pyxel
 TRANSPARENT = 11
 
 
-def abs(x: float) -> float:
-    return x * pyxel.sgn(x)
-
-
 class Hero:
     def __init__(self, x, y):
         self.x = x
