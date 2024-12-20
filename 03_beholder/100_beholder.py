@@ -176,9 +176,9 @@ class App:
     def draw(self):
         pyxel.cls(13)  # Clear screen
         self.hero.draw()
-        self.beholder.draw()
         if self.beholder.state == FIRING:
             self.beholder.shoot(self.hero)
+        self.beholder.draw()
         if self.hero.state == ZAPPED:
             pyxel.text(60, 10, "GAME OVER", 7, None)
 
