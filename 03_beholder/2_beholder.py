@@ -82,9 +82,8 @@ class Hero(Sprite):
 
 class App:
     def __init__(self):
-        pyxel.init(
-            160, 120, title="The beholder and its beam of death", fps=30
-        )  # width, height, title
+        # width, height, title
+        pyxel.init(160, 120, title="The beholder watch the hero")
         pyxel.load("beholder.pyxres")  # Load the assets
         self.hero = Hero(32, 104)
         self.beholder = Beholder(128, 32)
