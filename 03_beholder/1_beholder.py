@@ -7,7 +7,6 @@ class Hero:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.speed: int
         self.speed = 4
         self.angle = 2
         self._images = [(i * 16, 32, 16, 16, TRANSPARENT) for i in range(4)]

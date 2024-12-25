@@ -16,7 +16,6 @@ class Sprite:
         self.y = y
         self.speed: int
         self.angle: int  # bottom, left, right, top
-        self.state: int
 
     def move(self, angle: int):
         # 0: don't move
