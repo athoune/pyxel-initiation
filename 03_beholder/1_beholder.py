@@ -3,6 +3,18 @@ import pyxel
 TRANSPARENT = 11
 
 
+def between(xy: float, maxi: int) -> float:
+    "The xy value is between 0 and maxi"
+    if xy < 0:
+        return 0
+    return xy if xy < maxi else maxi
+
+
+def inside_screen(x, y: float) -> tuple[float, float]:
+    "The point cannot escape the screen"
+    return between(x, pyxel.width - 16), between(y, pyxel.height - 16)
+
+
 class Hero:
     def __init__(self, x, y):
         self.x = x
@@ -20,14 +32,7 @@ class Hero:
         self.x += [0, -1, 1, 0][angle] * self.speed
         self.y += [1, 0, 0, -1][angle] * self.speed
         # Can't escape the screen
-        if self.x < 0:
-            self.x = 0
-        elif self.x > pyxel.width - 16:
-            self.x = pyxel.width - 16
-        if self.y < 0:
-            self.y = 0
-        elif self.y > pyxel.height - 16:
-            self.y = pyxel.height - 16
+        self.x, self.y = inside_screen(self.x, self.y)
 
     def image(self):
         return self._images[self.angle]
