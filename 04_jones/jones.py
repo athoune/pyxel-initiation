@@ -1,4 +1,3 @@
-from re import S
 import pyxel
 
 TRANSPARENT = 0
