@@ -50,7 +50,12 @@ class Jones:
             self.death = pyxel.frame_count + 30
             self.state = DEAD
             return
-        tile = pyxel.tilemaps[1].pget(self.x // 8, self.y // 8 + 1)
+        # the tile under the feet of Jones
+        if self.direction == -1:  # the tile before
+            x = pyxel.ceil(self.x / 8)
+        else:  # the tile after
+            x = pyxel.floor(self.x / 8)
+        tile = pyxel.tilemaps[1].pget(x, self.y // 8 + 1)
         if tile in COLLSIONS:
             if self.state == FALLING:
                 self.state = WAITING
@@ -92,7 +97,7 @@ class Jones:
     def draw(self):
         if self.state == DEAD:
             if pyxel.frame_count % 10 < 5:
-                pyxel.text(70, 10, "GAME OVER", 9, None)
+                pyxel.text(70, 10, "GAME OVER", 8, None)
         else:
             pyxel.blt(self.x, self.y, 1, *(self.image()))
 
