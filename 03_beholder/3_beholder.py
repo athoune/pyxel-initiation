@@ -13,10 +13,6 @@ HEALTHY = 0
 ZAPPED = 1
 
 
-def abs(x: float) -> float:
-    return x * pyxel.sgn(x)
-
-
 def between(xy: float, maxi: int) -> float:
     "The xy value is between 0 and maxi"
     if xy < 0:
