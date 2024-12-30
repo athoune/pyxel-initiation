@@ -20,6 +20,7 @@ class Jones:
         self.state = WAITING
         self.direction = 1  # ->
         self.how_high = 0
+        self.death = 0
 
     def image(self) -> tuple[int, int, int, int, int]:
         if self.direction == 1:
@@ -36,6 +37,8 @@ class Jones:
         return images[0]
 
     def physic(self):
+        if self.state == DEAD:  # there is no physics when you are a soul
+            return
         if self.state == JUMPING:
             if self.y == self.how_high:
                 self.state = WAITING
@@ -43,8 +46,9 @@ class Jones:
                 self.y -= 2
                 self.x += self.direction
             return
-        if self.y >= pyxel.height - 8:
-            pyxel.text(60, 10, "GAME OVER", 7, None)
+        if self.y >= (pyxel.height - 8):
+            self.death = pyxel.frame_count + 30
+            self.state = DEAD
             return
         tile = pyxel.tilemaps[1].pget(self.x // 8, self.y // 8 + 1)
         if tile in COLLSIONS:
@@ -69,7 +73,6 @@ class Jones:
         self.direction = direction
 
     def update(self):
-        print(self.y)
         if self.state in (WAITING, WALKING):
             if pyxel.btn(pyxel.KEY_RIGHT):
                 dx = 1
@@ -77,14 +80,21 @@ class Jones:
                 dx = -1
             else:
                 dx = 0
+
             if pyxel.btnp(pyxel.KEY_UP):
                 self.jump(dx)
             else:
                 self.move(dx)
+        if self.state == DEAD and pyxel.frame_count > self.death:
+            pyxel.quit()
         self.physic()
 
     def draw(self):
-        pyxel.blt(self.x, self.y, 1, *(self.image()))
+        if self.state == DEAD:
+            if pyxel.frame_count % 10 < 5:
+                pyxel.text(70, 10, "GAME OVER", 9, None)
+        else:
+            pyxel.blt(self.x, self.y, 1, *(self.image()))
 
 
 class App:
@@ -103,7 +113,7 @@ class App:
         self.jones.update()
 
     def draw(self):
-        pyxel.cls(0)  # Clear screen
+        pyxel.cls(9)  # Clear screen
         # x, y, tm, u, v, w, h
         pyxel.bltm(0, 0, 1, 0, 0, pyxel.width, pyxel.height, 0)
         self.jones.draw()
