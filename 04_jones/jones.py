@@ -18,19 +18,20 @@ class Jones:
         self.images_right = [(i * 8, 16, 8, 8, TRANSPARENT) for i in range(4)]
         self.images_left = [(i * 8, 16, -8, 8, TRANSPARENT) for i in range(4)]
         self.state = WAITING
-        self.direction = 1  # ->
+        self.direction = 1  # 1: -> -1: <-
         self.how_high = 0
-        self.death = 0
+        self.death_time = 0
 
     def image(self) -> tuple[int, int, int, int, int]:
         if self.direction == 1:
             images = self.images_right
         else:
             images = self.images_left
+
         if self.state == FALLING:
             return images[2]
         if self.state == WALKING:
-            return images[(pyxel.frame_count // 5) % 2]
+            return images[(pyxel.frame_count // 5) % 2]  # move legs every 5 frames
         if self.state == JUMPING:
             return images[3]
         # WAITING
@@ -40,25 +41,25 @@ class Jones:
         if self.state == DEAD:  # there is no physics when you are a soul
             return
         if self.state == JUMPING:
-            if self.y == self.how_high:
-                self.state = WAITING
-            else:
+            if self.y > self.how_high:
                 self.y -= 2
                 self.x += self.direction
+            else:  # start falling soon
+                self.state = WAITING
             return
-        if self.y >= (pyxel.height - 8):
-            self.death = pyxel.frame_count + 30
+        if self.y >= (pyxel.height - 8):  # under the bottom of the screen
+            self.death_time = pyxel.frame_count + 30
             self.state = DEAD
             return
-        # the tile under the feet of Jones
         if self.direction == -1:  # the tile before
             x = pyxel.ceil(self.x / 8)
         else:  # the tile after
             x = pyxel.floor(self.x / 8)
+        # the tile under the feet of Jones
         tile = pyxel.tilemaps[1].pget(x, self.y // 8 + 1)
         if tile in COLLSIONS:
             if self.state == FALLING:
-                self.state = WAITING
+                self.state = WAITING  # soft landing
             return
         else:
             self.state = FALLING
@@ -90,7 +91,7 @@ class Jones:
                 self.jump(dx)
             else:
                 self.move(dx)
-        if self.state == DEAD and pyxel.frame_count > self.death:
+        if self.state == DEAD and pyxel.frame_count > self.death_time:
             pyxel.quit()
         self.physic()
 
@@ -107,9 +108,10 @@ class App:
         pyxel.init(160, 120, title="The temple")  # width, height, title
         pyxel.images[1] = pyxel.Image.from_image("temple.png", incl_colors=True)
         pyxel.tilemaps[1] = pyxel.Tilemap.from_tmx("temple.tmx", 0)
-        pyxel.tilemaps[1].imgsrc = 1
+        pyxel.tilemaps[1].imgsrc = 1  # The map use this image for its prites
 
         self.jones = Jones(8, 0)
+
         pyxel.run(self.update, self.draw)  # Starts Pyxel loop
 
     def update(self):
