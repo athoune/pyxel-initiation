@@ -8,7 +8,7 @@ FALLING = 2
 JUMPING = 3
 DEAD = 4
 
-COLLSIONS = ((0, 0), (1, 0), (2, 0))
+COLLISIONS = ((0, 0), (1, 0), (2, 0))
 
 
 class Jones:
@@ -57,7 +57,7 @@ class Jones:
             x = pyxel.floor(self.x / 8)
         # the tile under the feet of Jones
         tile = pyxel.tilemaps[1].pget(x, self.y // 8 + 1)
-        if tile in COLLSIONS:
+        if tile in COLLISIONS:
             if self.state == FALLING:
                 self.state = WAITING  # soft landing
             return
