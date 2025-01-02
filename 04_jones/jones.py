@@ -8,17 +8,44 @@ FALLING = 2
 JUMPING = 3
 DEAD = 4
 
-COLLISIONS = ((0, 0), (1, 0), (2, 0))
 
-
-class Jones:
+class Sprite:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.direction = 1  # 1: -> -1: <-
+
+
+class Collisions:
+    def __init__(self, solids: list[tuple[int, int]]):
+        "List of solids tiles"
+        self.solids = solids
+        self.map = 1
+
+    def floor(self, sprite: Sprite) -> bool:
+        "Does the sprite has floor under its feet?"
+        if sprite.direction == -1:  # the tile before
+            x = pyxel.ceil(sprite.x / 8)
+        else:  # the tile after
+            x = pyxel.floor(sprite.x / 8)
+        # the tile under the feet of Jones
+        tile = pyxel.tilemaps[self.map].pget(x, sprite.y // 8 + 1)
+        return tile in self.solids
+
+    def too_low(self, sprite: Sprite) -> bool:
+        "Does the sprite fall under the bottom of the screen?"
+        return sprite.y >= (pyxel.height - 8)
+
+
+WORLD: Collisions
+
+
+class Jones(Sprite):
+    def __init__(self, x, y):
+        super().__init__(x, y)
         self.images_right = [(i * 8, 16, 8, 8, TRANSPARENT) for i in range(4)]
         self.images_left = [(i * 8, 16, -8, 8, TRANSPARENT) for i in range(4)]
         self.state = WAITING
-        self.direction = 1  # 1: -> -1: <-
         self.how_high = 0
         self.death_time = 0
 
@@ -47,17 +74,11 @@ class Jones:
             else:  # start falling soon
                 self.state = WAITING
             return
-        if self.y >= (pyxel.height - 8):  # under the bottom of the screen
+        if WORLD.too_low(self):
             self.death_time = pyxel.frame_count + 30
             self.state = DEAD
             return
-        if self.direction == -1:  # the tile before
-            x = pyxel.ceil(self.x / 8)
-        else:  # the tile after
-            x = pyxel.floor(self.x / 8)
-        # the tile under the feet of Jones
-        tile = pyxel.tilemaps[1].pget(x, self.y // 8 + 1)
-        if tile in COLLISIONS:
+        if WORLD.floor(self):
             if self.state == FALLING:
                 self.state = WAITING  # soft landing
             return
@@ -109,6 +130,9 @@ class App:
         pyxel.images[1] = pyxel.Image.from_image("temple.png", incl_colors=True)
         pyxel.tilemaps[1] = pyxel.Tilemap.from_tmx("temple.tmx", 0)
         pyxel.tilemaps[1].imgsrc = 1  # The map use this image for its prites
+
+        global WORLD
+        WORLD = Collisions([(0, 0), (1, 0), (2, 0)])
 
         self.jones = Jones(8, 0)
 
