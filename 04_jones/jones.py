@@ -37,9 +37,6 @@ class Collisions:
         return sprite.y >= (pyxel.height - 8)
 
 
-WORLD: Collisions
-
-
 class Jones(Sprite):
     def __init__(self, x, y):
         super().__init__(x, y)
@@ -64,7 +61,7 @@ class Jones(Sprite):
         # WAITING
         return images[0]
 
-    def physic(self):
+    def physic(self, world: Collisions):
         if self.state == DEAD:  # there is no physics when you are a soul
             return
         if self.state == JUMPING:
@@ -74,11 +71,11 @@ class Jones(Sprite):
             else:  # start falling soon
                 self.state = WAITING
             return
-        if WORLD.too_low(self):
+        if world.too_low(self):
             self.death_time = pyxel.frame_count + 30
             self.state = DEAD
             return
-        if WORLD.floor(self):
+        if world.floor(self):
             if self.state == FALLING:
                 self.state = WAITING  # soft landing
             return
@@ -99,7 +96,7 @@ class Jones(Sprite):
         self.how_high = self.y - 16
         self.direction = direction
 
-    def update(self):
+    def update(self, world: Collisions):
         if self.state in (WAITING, WALKING):
             if pyxel.btn(pyxel.KEY_RIGHT):
                 dx = 1
@@ -114,7 +111,7 @@ class Jones(Sprite):
                 self.move(dx)
         if self.state == DEAD and pyxel.frame_count > self.death_time:
             pyxel.quit()
-        self.physic()
+        self.physic(world)
 
     def draw(self):
         if self.state == DEAD:
@@ -131,8 +128,7 @@ class App:
         pyxel.tilemaps[1] = pyxel.Tilemap.from_tmx("temple.tmx", 0)
         pyxel.tilemaps[1].imgsrc = 1  # The map use this image for its prites
 
-        global WORLD
-        WORLD = Collisions([(0, 0), (1, 0), (2, 0)])
+        self.world = Collisions([(0, 0), (1, 0), (2, 0)])
 
         self.jones = Jones(8, 0)
 
@@ -141,7 +137,7 @@ class App:
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):  # Hit Q to quit
             pyxel.quit()
-        self.jones.update()
+        self.jones.update(self.world)
 
     def draw(self):
         pyxel.cls(9)  # Clear screen
