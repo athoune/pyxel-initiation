@@ -22,20 +22,26 @@ class App:
         pyxel.cls(0)  # Clear screen
         # x, y, tm, u, v, w, h
         pyxel.bltm(0, 0, 1, 0, 0, pyxel.width, pyxel.height - 24, TRANSPARENT)
-        for i in range(24):
-            delta = pyxel.frame_count % 24
-            pyxel.bltm(
-                i + delta * i // 24,  # x
-                pyxel.height - 24 + i,  # y
-                1,  # tm
-                0,  # u
-                pyxel.height - 24 + i,  # v
-                pyxel.width,  # w
-                1,  # h
-                TRANSPARENT,
-            )
+        for i in range(2):
+            for j in range(24):
+                delta = pyxel.frame_count % 24
+                pyxel.bltm(
+                    j + delta * j // 24 - i * 48,  # x
+                    pyxel.height - 24 + j,  # y
+                    1,  # tm
+                    0,  # u
+                    pyxel.height - 24 + j,  # v
+                    pyxel.width,  # w
+                    1,  # h
+                    TRANSPARENT,
+                )
         for i in [1, 2, 7, 9]:
-            pyxel.blt(i * 8, 40, 1, *reeds[pyxel.frame_count // 10 % 3])
+            pyxel.blt(
+                i * 8,  # x
+                32,  # y
+                1,  # img
+                *reeds[pyxel.frame_count // 10 % 3],
+            )
 
 
 App()
