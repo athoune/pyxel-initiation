@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="8" tileheight="8" infinite="0" nextlayerid="2" nextobjectid="1">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="12" height="9" tilewidth="8" tileheight="8" infinite="0" nextlayerid="2" nextobjectid="1">
  <tileset firstgid="1" name="rain" tilewidth="8" tileheight="8" tilecount="64" columns="8">
   <image source="rain.png" width="64" height="64"/>
  </tileset>
- <layer id="1" name="Calque de Tuiles 1" width="10" height="10">
+ <layer id="1" name="Calque de Tuiles 1" width="12" height="9">
   <data encoding="csv">
-0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,
-25,26,0,25,26,27,28,0,0,0,
-33,34,0,33,34,35,36,0,0,0,
-41,42,0,41,42,43,44,0,0,0,
-45,46,45,45,45,46,45,46,45,45,
-39,39,39,39,39,39,39,39,39,39,
-47,47,47,47,47,47,47,47,47,47,
-47,47,47,47,47,47,47,47,47,47
+0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,
+25,26,0,25,26,27,28,0,0,25,26,0,
+33,34,0,33,34,35,36,0,0,33,34,0,
+41,42,0,41,42,43,44,0,0,41,42,0,
+45,46,45,45,45,46,45,46,45,45,45,45,
+39,39,39,39,39,39,39,39,39,39,39,39,
+47,47,47,47,47,47,47,47,47,47,47,47,
+47,47,47,47,47,47,47,47,47,47,47,47
 </data>
  </layer>
 </map>

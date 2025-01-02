@@ -7,7 +7,7 @@ reeds = [(i * 8, 16, 8, 8, TRANSPARENT) for i in [4, 5, 6]]
 
 class App:
     def __init__(self):
-        pyxel.init(80, 80, title="The rain")  # width, height, title
+        pyxel.init(96, 72, title="The rain")  # width, height, title
         pyxel.images[1] = pyxel.Image.from_image("rain.png", incl_colors=True)
         pyxel.tilemaps[1] = pyxel.Tilemap.from_tmx("rain.tmx", 0)
         pyxel.tilemaps[1].imgsrc = 1  # The map use this image for its prites
