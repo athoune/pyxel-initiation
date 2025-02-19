@@ -36,7 +36,7 @@ class Sprite:
 AIR_FRICTION = 0.8
 GRAVITY = 0.2
 FALL_SPEED = 2
-JUMP_SPEED = 1
+JUMP_SPEED = 4
 TILE_SIZE = 8
 
 
@@ -64,6 +64,8 @@ class Physics:
     def goto(self, who: Sprite, dx: int, dy: int) -> bool:
         if who.state == FALLING:
             dy = FALL_SPEED
+        elif who.state == JUMPING:
+            dy = -JUMP_SPEED
         target_x = who.x + dx
         target_y = who.y + dy
         if (  # The sprite can jump outside
@@ -81,8 +83,12 @@ class Physics:
             dx = 0
         if self.is_collision_tile(target_x, target_y + TILE_SIZE):  # landing
             dy = 0
-        elif not self.is_collision_tile(target_x, target_y + 1):  # oups, falling
-            dy = FALL_SPEED
+            if who.state == FALLING:
+                who.state = WAITING
+        if not self.is_collision_tile(
+            target_x, target_y + TILE_SIZE + 1
+        ):  # oups, falling
+            dy += FALL_SPEED
 
         if dx == 0 and dy == 0:
             who.state = WAITING
@@ -104,18 +110,16 @@ class Physics:
 
 class Character(Sprite):
     def update(self, world: Physics):
+        if self.state == DEAD and pyxel.frame_count > self.death_time:
+            pyxel.quit()
         dx, dy = 0, 0
-        if self.state in (WAITING, WALKING):
+        if self.state in (WAITING, WALKING, JUMPING):
             if pyxel.btn(pyxel.KEY_RIGHT):
                 dx = self.walk_speed
             elif pyxel.btn(pyxel.KEY_LEFT):
                 dx = -self.walk_speed
-            else:
-                dx = 0
             if pyxel.btnp(pyxel.KEY_UP):
                 dy = -JUMP_SPEED
-        if self.state == DEAD and pyxel.frame_count > self.death_time:
-            pyxel.quit()
         world.goto(self, dx, dy)
 
 
