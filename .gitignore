@@ -3,4 +3,6 @@
 *.pyxapp
 pyxel_examples/
 .ruff_cache
+.venv
+.DS_store
 
