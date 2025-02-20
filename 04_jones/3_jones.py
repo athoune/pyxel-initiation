@@ -19,7 +19,8 @@ GROUND = 7
 OUTSIDE = 8
 
 # Tuning
-AIR_FRICTION = 0.7
+VERTICAL_FRICTION = 0.7
+HORIZONTAL_FRICTION = 0.6
 FALL_SPEED = 2
 JUMP_SPEED = 8
 TILE_SIZE = 8
@@ -30,8 +31,8 @@ class Sprite:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.direction: int = 1  # 1: -> -1: <-
-        self.fly_direction: int = 1
+        self.direction: float = 1  # 1: -> -1: <-
+        self.gaze_direction: int = 1
         self.width = 1  # number of tile
         self.height = 1
         self.current_speed: tuple[float, float] = (0, 0)
@@ -56,17 +57,16 @@ class Physics:
 
     def move(self, who: Sprite):
         dx, dy = who.current_speed
-        if who.state in (JUMP, JUMPING, FALLING) and who.fly_direction != 0:
-            dx = who.fly_direction * who.walk_speed / 4
-            who.fly_direction = 0
+        if who.state in (JUMP, JUMPING, FALLING) and who.direction != 0:
+            dx = who.direction * who.walk_speed
+            # who.direction = 0
 
-        if who.state == FALLING:
-            who.current_speed = (
-                who.current_speed[0] * AIR_FRICTION,
-                who.current_speed[1],
-            )
-        elif who.state == JUMPING:
-            dy = who.current_speed[1] * AIR_FRICTION
+        if who.state in (FALLING, JUMPING, JUMP):
+            who.direction *= HORIZONTAL_FRICTION
+            dx = who.direction * who.walk_speed
+
+        if who.state == JUMPING:
+            dy = who.current_speed[1] * VERTICAL_FRICTION
             if dy > -0.1:
                 who.state = FALLING
                 dy = 1
@@ -120,7 +120,7 @@ class Physics:
 
         who.current_speed = dx, dy
         who.x += dx
-        who.y += dy
+        who.y += int(dy)
 
 
 class Character(Sprite):
@@ -129,16 +129,18 @@ class Character(Sprite):
             if pyxel.frame_count > self.death_time:
                 pyxel.quit()
             return
-        direction = 0
+        self.direction = 0
         if pyxel.btnp(pyxel.KEY_RIGHT, 1, 1):
-            direction = 1
+            self.direction = 1
         elif pyxel.btnp(pyxel.KEY_LEFT, 1, 1):
-            direction = -1
+            self.direction = -1
+        if self.direction != 0:
+            self.gaze_direction = self.direction
 
-        if self.state == WALKING and direction == 0:
+        if self.state == WALKING and self.direction == 0:
             self.state = WAITING
-        elif self.state in (WAITING, WALKING) and direction != 0:
-            self.direction = direction
+            self.direction = 0
+        elif self.state in (WAITING, WALKING) and self.direction != 0:
             self.state = WALKING
 
         if pyxel.btnp(pyxel.KEY_UP) and self.state not in (
@@ -147,11 +149,6 @@ class Character(Sprite):
             FALLING,
         ):
             self.state = JUMP
-            self.direction = direction
-
-        if self.state in (JUMP, JUMPING, FALLING):
-            self.direction = direction
-            self.fly_direction = direction
 
         world.move(self)
 
@@ -163,7 +160,7 @@ class Jones(Character):
         self.images_left = [(i * 8, 16, -8, 8, TRANSPARENT) for i in range(4)]
 
     def image(self) -> tuple[int, int, int, int, int]:
-        if self.direction == 1:
+        if self.gaze_direction == 1:
             images = self.images_right
         else:
             images = self.images_left
