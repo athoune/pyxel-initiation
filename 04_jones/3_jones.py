@@ -1,3 +1,5 @@
+import os
+from re import I
 from typing import Iterable
 
 import pyxel
@@ -40,6 +42,7 @@ class Sprite:
         self.jump_speed = JUMP_SPEED
         self.state = WAITING
         self.death_time = 0
+        self.debug = False
 
 
 class Physics:
@@ -52,7 +55,7 @@ class Physics:
 
     def is_collision_tile(self, x, y):
         "Is this a collision tile ?"
-        x, y = x // TILE_SIZE, y // TILE_SIZE
+        x, y = round(x / TILE_SIZE), y // TILE_SIZE
         return self.collision_tilemap.pget(x, y) in self.collisions
 
     def move(self, who: Sprite):
@@ -78,12 +81,14 @@ class Physics:
             dx = who.direction * who.walk_speed
         elif who.state == WAITING:
             dx = 0
-        """
-        if who.state not in (FALLING, JUMP, JUMPING):  # not FALLING nor JUMPING
-            delta = who.y % TILE_SIZE
-            if delta > (TILE_SIZE - 2) or delta < 2:
-                who.y = (who.y // TILE_SIZE) * TILE_SIZE
-        """
+
+        who.delta = (
+            round(who.x % TILE_SIZE, 2),
+            round(who.y % TILE_SIZE, 2),
+            who.x // TILE_SIZE,
+            who.y // TILE_SIZE,
+            self.collision_tilemap.pget(who.x // TILE_SIZE, who.y // TILE_SIZE),
+        )
 
         target_x = who.x + dx
         target_y = who.y + dy
@@ -117,6 +122,10 @@ class Physics:
         ):  # oups, falling
             who.state = FALLING
             dy = FALL_SPEED
+        if who.state == WAITING:
+            d = who.y % TILE_SIZE
+            if d >= (TILE_SIZE / 2):
+                dy = TILE_SIZE - d
 
         who.current_speed = dx, dy
         who.x += dx
@@ -179,6 +188,8 @@ class Jones(Character):
             if pyxel.frame_count % 10 < 5:
                 pyxel.text(70, 10, "GAME OVER", 8, None)
         else:
+            if self.debug:
+                pyxel.text(10, 10, f"{self.delta}", 8, None)
             pyxel.blt(self.x, self.y, 1, *(self.image()))
 
 
@@ -192,6 +203,7 @@ class App:
         self.world = Physics([(0, 0), (1, 0), (2, 0)], 1)
 
         self.jones = Jones(8, 0)
+        self.jones.debug = bool(os.getenv("DEBUG"))
 
         pyxel.run(self.update, self.draw)  # Starts Pyxel loop
 
