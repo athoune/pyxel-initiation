@@ -78,13 +78,13 @@ class Physics:
             dx = who.direction * who.walk_speed
         elif who.state == WAITING:
             dx = 0
+        """
         if who.state not in (FALLING, JUMP, JUMPING):  # not FALLING nor JUMPING
             delta = who.y % TILE_SIZE
             if delta > (TILE_SIZE - 2) or delta < 2:
                 who.y = (who.y // TILE_SIZE) * TILE_SIZE
+        """
 
-        if self.is_collision_tile(who.x, who.y):
-            print("stuck")
         target_x = who.x + dx
         target_y = who.y + dy
         if (  # The sprite can jump over the top, but not outside left, rigth, bottom sides of the screen
@@ -103,9 +103,13 @@ class Physics:
         ):  # bim, the wall
             dx = 0
             who.state = WAITING
-        if self.is_collision_tile(target_x, target_y + TILE_SIZE):  # landing
+        if self.is_collision_tile(
+            target_x, target_y + TILE_SIZE
+        ) or self.is_collision_tile(target_x, target_y):  # landing
             dy = 0
             delta = who.y % TILE_SIZE
+            if delta != 0:
+                print("delta:", delta)
             if who.state == FALLING:
                 who.state = WAITING
         if who.state not in (JUMP, JUMPING) and not self.is_collision_tile(
