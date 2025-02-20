@@ -2,8 +2,10 @@ from typing import Iterable
 
 import pyxel
 
+# Color
 TRANSPARENT = 0
 
+# States
 WAITING = 0
 WALKING = 1
 FALLING = 2
@@ -14,6 +16,14 @@ HIT = 5
 FALL = 6
 GROUND = 7
 OUTSIDE = 8
+
+# Tuning
+AIR_FRICTION = 0.8
+GRAVITY = 0.2
+FALL_SPEED = 2
+JUMP_SPEED = 6
+TILE_SIZE = 8
+DEATH_DURATION = 60
 
 
 class Sprite:
@@ -29,16 +39,6 @@ class Sprite:
         self.state = WAITING
         self.death_time = 0
 
-    def image(self) -> tuple[int, int, int, int, int]:
-        raise NotImplementedError
-
-
-AIR_FRICTION = 0.8
-GRAVITY = 0.2
-FALL_SPEED = 2
-JUMP_SPEED = 4
-TILE_SIZE = 8
-
 
 class Physics:
     def __init__(
@@ -50,30 +50,31 @@ class Physics:
 
     def is_collision_tile(self, x, y):
         x, y = x // TILE_SIZE, y // TILE_SIZE
-        print(
-            x,
-            y,
-            "tile:",
-            self.collision_tilemap.pget(x, y),
-            "=>",
-            self.collisions,
-            self.collision_tilemap.pget(x, y) in self.collisions,
-        )
         return self.collision_tilemap.pget(x, y) in self.collisions
 
-    def goto(self, who: Sprite, dx: int, dy: int) -> bool:
+    def goto(self, who: Sprite, dx: float, dy: float):
         if who.state == FALLING:
-            dy = FALL_SPEED
+            dy = who.current_speed[1]
         elif who.state == JUMPING:
-            dy = -JUMP_SPEED
+            dx = who.current_speed[0]
+            dy = who.current_speed[1] * AIR_FRICTION
+            if dy > -0.1:
+                dy = FALL_SPEED / 4
+                print("Falling", dx, dy)
+        else:  # not FALLING nor JUMPING
+            if (who.y % TILE_SIZE) > (TILE_SIZE - 1):
+                who.y = (who.y // TILE_SIZE) * TILE_SIZE
+
         target_x = who.x + dx
         target_y = who.y + dy
         if (  # The sprite can jump outside
             target_x < 0
             or target_x > pyxel.width + TILE_SIZE
-            or target_y > pyxel.height + TILE_SIZE
+            or target_y >= pyxel.height - TILE_SIZE
         ):
-            return False
+            who.state = DEAD
+            who.death_time = pyxel.frame_count + DEATH_DURATION
+            return
 
         if dy < 0 and self.is_collision_tile(target_x, target_y):  # bim, the ceil
             dy = 0
@@ -103,22 +104,33 @@ class Physics:
         who.current_speed = dx, dy
         who.x += dx
         who.y += dy
-        print(who.state, "d (", dx, dy, ") who(", who.x, who.y, ")")
-
-        return True
+        print(
+            "state",
+            who.state,
+            "d (",
+            dx,
+            dy,
+            ") who(",
+            who.x,
+            who.y,
+            ")",
+            who.y % TILE_SIZE,
+        )
 
 
 class Character(Sprite):
     def update(self, world: Physics):
-        if self.state == DEAD and pyxel.frame_count > self.death_time:
-            pyxel.quit()
+        if self.state == DEAD:
+            if pyxel.frame_count > self.death_time:
+                pyxel.quit()
+            return
         dx, dy = 0, 0
         if self.state in (WAITING, WALKING, JUMPING):
-            if pyxel.btn(pyxel.KEY_RIGHT):
+            if pyxel.btnp(pyxel.KEY_RIGHT, 1, 1):
                 dx = self.walk_speed
-            elif pyxel.btn(pyxel.KEY_LEFT):
+            elif pyxel.btnp(pyxel.KEY_LEFT, 1, 1):
                 dx = -self.walk_speed
-            if pyxel.btnp(pyxel.KEY_UP):
+            if pyxel.btnp(pyxel.KEY_UP, 1, 1) and self.state != JUMPING:
                 dy = -JUMP_SPEED
         world.goto(self, dx, dy)
 
@@ -155,7 +167,7 @@ class Jones(Character):
 
 class App:
     def __init__(self):
-        pyxel.init(160, 120, title="The temple")  # width, height, title
+        pyxel.init(160, 120, title="The temple", fps=30)  # width, height, title
         pyxel.images[1] = pyxel.Image.from_image("temple.png", incl_colors=True)
         pyxel.tilemaps[1] = pyxel.Tilemap.from_tmx("temple.tmx", 0)
         pyxel.tilemaps[1].imgsrc = 1  # The map use this image for its prites
