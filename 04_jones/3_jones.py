@@ -60,10 +60,6 @@ class Physics:
 
     def move(self, who: Sprite):
         dx, dy = who.current_speed
-        if who.state in (JUMP, JUMPING, FALLING) and who.direction != 0:
-            dx = who.direction * who.walk_speed
-            # who.direction = 0
-
         if who.state in (FALLING, JUMPING, JUMP):
             who.direction *= HORIZONTAL_FRICTION
             dx = who.direction * who.walk_speed
@@ -73,7 +69,6 @@ class Physics:
             if dy > -0.1:
                 who.state = FALLING
                 dy = 1
-                print("Falling", dx, dy)
         elif who.state == JUMP:
             dy = -who.jump_speed
             who.state = JUMPING
@@ -82,7 +77,7 @@ class Physics:
         elif who.state == WAITING:
             dx = 0
 
-        who.delta = (
+        who.delta = (  # debug stuff to write on screen
             round(who.x % TILE_SIZE, 2),
             round(who.y % TILE_SIZE, 2),
             who.x // TILE_SIZE,
@@ -92,7 +87,9 @@ class Physics:
 
         target_x = who.x + dx
         target_y = who.y + dy
-        if (  # The sprite can jump over the top, but not outside left, rigth, bottom sides of the screen
+
+        # The sprite can jump over the top, but not outside left, rigth, bottom sides of the screen
+        if (
             target_x < 0
             or target_x > pyxel.width + TILE_SIZE
             or target_y >= pyxel.height - TILE_SIZE
@@ -101,20 +98,17 @@ class Physics:
             who.death_time = pyxel.frame_count + DEATH_DURATION
             return
 
-        if dy < 0 and self.is_collision_tile(target_x, target_y):  # bim, the ceil
+        if dy < 0 and self.is_collision_tile(target_x, target_y):  # ouch, the ceil
             dy = 0
         if (dx > 0 and self.is_collision_tile(target_x + TILE_SIZE, target_y)) or (
             dx < 0 and self.is_collision_tile(target_x, target_y)
-        ):  # bim, the wall
+        ):  # ouch, the wall
             dx = 0
             who.state = WAITING
         if self.is_collision_tile(
             target_x, target_y + TILE_SIZE
         ) or self.is_collision_tile(target_x, target_y):  # landing
             dy = 0
-            delta = who.y % TILE_SIZE
-            if delta != 0:
-                print("delta:", delta)
             if who.state == FALLING:
                 who.state = WAITING
         if who.state not in (JUMP, JUMPING) and not self.is_collision_tile(
@@ -122,7 +116,7 @@ class Physics:
         ):  # oups, falling
             who.state = FALLING
             dy = FALL_SPEED
-        if who.state == WAITING:
+        if who.state in (WAITING, WALKING):
             d = who.y % TILE_SIZE
             if d >= (TILE_SIZE / 2):
                 dy = TILE_SIZE - d
