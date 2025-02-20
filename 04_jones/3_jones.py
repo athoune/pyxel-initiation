@@ -9,8 +9,9 @@ TRANSPARENT = 0
 WAITING = 0
 WALKING = 1
 FALLING = 2
-JUMPING = 3
-DEAD = 4
+JUMP = 3
+JUMPING = 4
+DEAD = 5
 
 HIT = 5
 FALL = 6
@@ -18,10 +19,9 @@ GROUND = 7
 OUTSIDE = 8
 
 # Tuning
-AIR_FRICTION = 0.8
-GRAVITY = 0.2
+AIR_FRICTION = 0.7
 FALL_SPEED = 2
-JUMP_SPEED = 6
+JUMP_SPEED = 8
 TILE_SIZE = 8
 DEATH_DURATION = 60
 
@@ -31,11 +31,12 @@ class Sprite:
         self.x = x
         self.y = y
         self.direction: int = 1  # 1: -> -1: <-
+        self.fly_direction: int = 1
         self.width = 1  # number of tile
         self.height = 1
-        self.current_speed: tuple[int, int] = (0, 0)
+        self.current_speed: tuple[float, float] = (0, 0)
         self.walk_speed = 2
-        self.jump_speed = 1
+        self.jump_speed = JUMP_SPEED
         self.state = WAITING
         self.death_time = 0
 
@@ -49,25 +50,44 @@ class Physics:
         self.collision_tilemap = pyxel.tilemaps[collision_tilemap]
 
     def is_collision_tile(self, x, y):
+        "Is this a collision tile ?"
         x, y = x // TILE_SIZE, y // TILE_SIZE
         return self.collision_tilemap.pget(x, y) in self.collisions
 
-    def goto(self, who: Sprite, dx: float, dy: float):
+    def move(self, who: Sprite):
+        dx, dy = who.current_speed
+        if who.state in (JUMP, JUMPING, FALLING) and who.fly_direction != 0:
+            dx = who.fly_direction * who.walk_speed / 4
+            who.fly_direction = 0
+
         if who.state == FALLING:
-            dy = who.current_speed[1]
+            who.current_speed = (
+                who.current_speed[0] * AIR_FRICTION,
+                who.current_speed[1],
+            )
         elif who.state == JUMPING:
-            dx = who.current_speed[0]
             dy = who.current_speed[1] * AIR_FRICTION
             if dy > -0.1:
-                dy = FALL_SPEED / 4
+                who.state = FALLING
+                dy = 1
                 print("Falling", dx, dy)
-        else:  # not FALLING nor JUMPING
-            if (who.y % TILE_SIZE) > (TILE_SIZE - 1):
+        elif who.state == JUMP:
+            dy = -who.jump_speed
+            who.state = JUMPING
+        elif who.state == WALKING:
+            dx = who.direction * who.walk_speed
+        elif who.state == WAITING:
+            dx = 0
+        if who.state not in (FALLING, JUMP, JUMPING):  # not FALLING nor JUMPING
+            delta = who.y % TILE_SIZE
+            if delta > (TILE_SIZE - 2) or delta < 2:
                 who.y = (who.y // TILE_SIZE) * TILE_SIZE
 
+        if self.is_collision_tile(who.x, who.y):
+            print("stuck")
         target_x = who.x + dx
         target_y = who.y + dy
-        if (  # The sprite can jump outside
+        if (  # The sprite can jump over the top, but not outside left, rigth, bottom sides of the screen
             target_x < 0
             or target_x > pyxel.width + TILE_SIZE
             or target_y >= pyxel.height - TILE_SIZE
@@ -82,40 +102,21 @@ class Physics:
             dx < 0 and self.is_collision_tile(target_x, target_y)
         ):  # bim, the wall
             dx = 0
+            who.state = WAITING
         if self.is_collision_tile(target_x, target_y + TILE_SIZE):  # landing
             dy = 0
+            delta = who.y % TILE_SIZE
             if who.state == FALLING:
                 who.state = WAITING
-        if not self.is_collision_tile(
+        if who.state not in (JUMP, JUMPING) and not self.is_collision_tile(
             target_x, target_y + TILE_SIZE + 1
         ):  # oups, falling
-            dy += FALL_SPEED
-
-        if dx == 0 and dy == 0:
-            who.state = WAITING
-        elif dx != 0:
-            who.state = WALKING
-            who.direction = pyxel.sgn(dx)
-        elif dy < 0:
-            who.state = JUMPING
-        elif dy > 0:
             who.state = FALLING
+            dy = FALL_SPEED
 
         who.current_speed = dx, dy
         who.x += dx
         who.y += dy
-        print(
-            "state",
-            who.state,
-            "d (",
-            dx,
-            dy,
-            ") who(",
-            who.x,
-            who.y,
-            ")",
-            who.y % TILE_SIZE,
-        )
 
 
 class Character(Sprite):
@@ -124,15 +125,31 @@ class Character(Sprite):
             if pyxel.frame_count > self.death_time:
                 pyxel.quit()
             return
-        dx, dy = 0, 0
-        if self.state in (WAITING, WALKING, JUMPING):
-            if pyxel.btnp(pyxel.KEY_RIGHT, 1, 1):
-                dx = self.walk_speed
-            elif pyxel.btnp(pyxel.KEY_LEFT, 1, 1):
-                dx = -self.walk_speed
-            if pyxel.btnp(pyxel.KEY_UP, 1, 1) and self.state != JUMPING:
-                dy = -JUMP_SPEED
-        world.goto(self, dx, dy)
+        direction = 0
+        if pyxel.btnp(pyxel.KEY_RIGHT, 1, 1):
+            direction = 1
+        elif pyxel.btnp(pyxel.KEY_LEFT, 1, 1):
+            direction = -1
+
+        if self.state == WALKING and direction == 0:
+            self.state = WAITING
+        elif self.state in (WAITING, WALKING) and direction != 0:
+            self.direction = direction
+            self.state = WALKING
+
+        if pyxel.btnp(pyxel.KEY_UP) and self.state not in (
+            JUMP,
+            JUMPING,
+            FALLING,
+        ):
+            self.state = JUMP
+            self.direction = direction
+
+        if self.state in (JUMP, JUMPING, FALLING):
+            self.direction = direction
+            self.fly_direction = direction
+
+        world.move(self)
 
 
 class Jones(Character):
@@ -140,7 +157,6 @@ class Jones(Character):
         super().__init__(x, y)
         self.images_right = [(i * 8, 16, 8, 8, TRANSPARENT) for i in range(4)]
         self.images_left = [(i * 8, 16, -8, 8, TRANSPARENT) for i in range(4)]
-        self.death_time = 0
 
     def image(self) -> tuple[int, int, int, int, int]:
         if self.direction == 1:
@@ -152,7 +168,7 @@ class Jones(Character):
             return images[2]
         if self.state == WALKING:
             return images[(pyxel.frame_count // 5) % 2]  # move legs every 5 frames
-        if self.state == JUMPING:
+        if self.state in (JUMP, JUMPING):
             return images[3]
         # WAITING
         return images[0]
