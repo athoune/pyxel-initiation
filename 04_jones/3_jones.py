@@ -30,7 +30,10 @@ DEATH_DURATION = 60
 
 
 class Sprite:
+    "Sprite is abastract class of something that will move."
+
     def __init__(self, x, y):
+        "Initial position."
         self.x = x
         self.y = y
         self.direction: float = 1  # 1: -> -1: <-
@@ -42,10 +45,12 @@ class Sprite:
         self.jump_speed = JUMP_SPEED
         self.state = WAITING
         self.death_time = 0
-        self.debug = False
+        self.debug = False  # Displays debug on screen
 
 
 class Physics:
+    "Crude Physic Engine that handle collision and different movements, like falling."
+
     def __init__(
         self, collision_tiles: Iterable[tuple[int, int]], collision_tilemap: int
     ):
@@ -59,6 +64,7 @@ class Physics:
         return self.collision_tilemap.pget(x, y) in self.collisions
 
     def move(self, who: Sprite):
+        "Move that Sprite."
         dx, dy = who.current_speed
         if who.state in (FALLING, JUMPING, JUMP):
             who.direction *= HORIZONTAL_FRICTION
@@ -127,6 +133,8 @@ class Physics:
 
 
 class Character(Sprite):
+    "Character is a Sprite handled by the keyboard."
+
     def update(self, world: Physics):
         if self.state == DEAD:
             if pyxel.frame_count > self.death_time:
@@ -157,6 +165,8 @@ class Character(Sprite):
 
 
 class Jones(Character):
+    "The carachter has to handles its images."
+
     def __init__(self, x, y):
         super().__init__(x, y)
         self.images_right = [(i * 8, 16, 8, 8, TRANSPARENT) for i in range(4)]
