@@ -5,4 +5,6 @@ pyxel_examples/
 .ruff_cache
 .venv
 .DS_store
-
+.pyxel-venv-*/
+build/
+*.egg-info
