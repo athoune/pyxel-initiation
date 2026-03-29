@@ -1,3 +1,9 @@
+"""
+Explore the galaxy with an alien spaceship.
+
+Minimalistic Pyxel example
+"""
+
 import pyxel
 
 
